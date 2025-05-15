@@ -1,8 +1,8 @@
 :root {
-    --dark-background: #1C2331;
-    --dark-accent: #2C3E50;
-    --light-text: #F7F9FC;
-    --primary-highlight: #FF6B6B;
+      --dark-background: #1C2331;
+      --dark-accent: #2C3E50;
+      --light-text: #F7F9FC;
+      --primary-highlight: #5f999b;
   }
 
   * {
@@ -83,7 +83,7 @@
     position: absolute;
     top: 2rem;
     left: 2rem;
-    background: rgba(255, 107, 107, 0.2);
+    background: #5f999b;
     color: white;
     border: none;
     padding: 0.8rem 1.5rem;
@@ -94,5 +94,14 @@
 
   .back-button:hover {
     transform: scale(1.05);
-    background: rgba(255, 107, 107, 0.3);
+    background: #5f999b;
   }
+
+ .image-fixe-haut-droite{
+  position: fixed;
+  top: 40px ;
+  right: 30px;
+  width: 200px;
+
+ }
+  
