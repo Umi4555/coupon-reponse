@@ -1,0 +1,19 @@
+.news-section {
+    background: var(--news-background);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.news-items {
+    display: flex;
+    gap: 1rem;
+}
+
+.news-item {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1rem;
+    border-radius: 10px;
+}
+
