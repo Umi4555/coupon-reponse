@@ -1,0 +1,18 @@
+@import 'variables.css';
+@import 'base.css';
+@import 'layout.css';
+@import 'components/header.css';
+@import 'components/navigation.css';
+@import 'components/news-section.css';
+@import 'components/filieres.css';
+@import 'components/login.css';
+@import 'components/document-upload.css';
+@import 'components/admin-dashboard.css';
+@import 'components/admin-login.css';
+@import 'components/document-viewer.css';
+@import 'components/document-upload-modal.css';
+@import 'components/category-items.css';
+@import 'components/professional-family.css';
+@import 'components/admin-dashboard-content.css';
+@import 'responsive.css';
+
