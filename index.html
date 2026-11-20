@@ -1,182 +1,503 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Espace Stages – Lycée Château Blanc</title>
-    <meta name="description" content="Plateforme de gestion et consultation des documents de stages pour les élèves du Lycée Château Blanc">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles/main.css">
-    <!-- styles.css removed (refactored into component files). Keep main.css only -->
-    <script type="module" src="admin-login.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Espace Stages – Lycée Château Blanc</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --navy:#0f2540;--navy-2:#0b1b30;--gold:#cfa75b;--teal:#3aa0a8;
+      --muted:#6b7280;--danger:#b91c1c;--success:#15803d;
+      --card-shadow:0 6px 18px rgba(9,20,34,0.12);
+    }
+    html,body{height:100%;margin:0}
+    body{
+      font-family:"Source Sans 3","Source Sans Pro",system-ui,-apple-system,sans-serif;
+      background:linear-gradient(180deg,#fde6a0 0%,#ffffff 100%);
+      color:#072034;-webkit-font-smoothing:antialiased;
+      padding:0;box-sizing:border-box;height:100vh;overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .app{
+      position:relative;width:100%;max-width:1200px;
+      /* make the app a fixed, centered frame so the page doesn't shift or show duplicate backgrounds */
+      height:calc(100vh - 12px);
+      max-height:1000px;
+      background:linear-gradient(180deg,#ffffff,#fbfbfd);
+      border-radius:16px;box-shadow:var(--card-shadow);padding:18px;box-sizing:border-box;
+      /* make the app a column flex container and allow internal scrolling */
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:8px}
+    a.back{
+      display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:white;
+      background:var(--teal);padding:8px 10px;font-size:13px;border-radius:8px;
+      box-shadow:0 2px 6px rgba(6,14,24,0.08);font-weight:600;border:1px solid rgba(0,0,0,0.06);
+      position:fixed;left:8px;top:24px;z-index:120;
+    }
+    .logo{position:absolute;left:50%;transform:translateX(-50%);top:20px;z-index:110}
+    .title-block{text-align:center;flex:1 1 100%;margin-top:6px;margin-bottom:6px}
+    h1{margin:6px 0 0;font-family:"Playfair Display",serif;font-size:20px;color:var(--navy-2);letter-spacing:.2px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:8px;
+      padding:10px 14px;border-radius:10px;cursor:pointer;border:1px solid rgba(7,32,52,0.06);
+      background:#fff;color:var(--navy);font-weight:600;font-size:14px;font-family:inherit;
+      text-decoration:none;transition:all 0.18s ease;
+    }
+    .btn:hover{filter:brightness(0.96);transform:translateY(-1px)}
+    .btn.teal{background:var(--teal);color:white;border-color:rgba(0,0,0,0.06);box-shadow:0 6px 18px rgba(58,160,168,0.12)}
+    .btn.primary{background:linear-gradient(180deg,var(--navy),var(--navy-2));color:white;border:none;box-shadow:0 8px 22px rgba(9,20,34,0.12)}
+    .btn.danger{background:#fef2f2;color:var(--danger);border-color:#fca5a5}
+    .btn.ghost{background:transparent;border:1px solid rgba(7,32,52,0.12);color:var(--navy)}
+    .btn.sm{padding:6px 10px;font-size:12px;border-radius:7px}
+    .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+    main{display:grid;grid-template-columns:1fr;gap:14px;padding:8px 4px 20px}
+    .cards{display:flex;gap:12px;flex:1 1 100%;flex-wrap:wrap}
+    .card{
+      background:linear-gradient(180deg,#ffffff,#fbfbfd);border-radius:12px;padding:14px;
+      min-width:220px;flex:1 1 300px;box-shadow:var(--card-shadow);border:1px solid rgba(11,27,44,0.04);
+      opacity:0;transform:translateY(14px);transition:all 520ms cubic-bezier(.2,.9,.3,1);
+    }
+    .card.show{opacity:1;transform:none}
+    .card h3{margin:0 0 6px;font-family:"Playfair Display",serif;font-size:16px;color:var(--navy-2)}
+    .card p{margin:0;color:var(--muted);font-size:13px}
+    /* Accordion */
+    .accordion{background:transparent;border-radius:12px;padding:10px;display:block}
+    .section{background:white;border-radius:12px;padding:10px;margin-bottom:10px;box-shadow:0 4px 12px rgba(9,20,34,0.06);border:1px solid rgba(11,27,44,0.04)}
+    .section .head{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;padding:6px}
+    .section .head h4{margin:0;font-size:15px;font-weight:600;color:var(--navy-2);font-family:"Playfair Display",serif}
+    .chev{width:36px;height:36px;display:inline-grid;place-items:center;border-radius:8px;background:linear-gradient(180deg,rgba(11,27,44,0.04),rgba(11,27,44,0.02));color:var(--navy);font-weight:700;font-size:18px;transition:transform .2s}
+    .section.open .chev{transform:rotate(45deg)}
+    .section .body{padding:8px 6px 12px;border-top:1px dashed rgba(7,32,52,0.04);margin-top:8px;display:none;gap:8px;flex-wrap:wrap}
+    .section.open .body{display:flex;animation:fadeIn 360ms ease both}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    /* Subgroups (TNE) */
+    .subgroup{flex:1 1 100%;display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+    .subgroup-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--teal);padding:4px 0 4px;border-bottom:1px solid rgba(58,160,168,0.25);margin-bottom:4px}
+    .subgroup-docs{display:flex;flex-wrap:wrap;gap:8px}
+    .doc{
+      display:inline-flex;gap:12px;align-items:center;padding:14px 16px;border-radius:12px;
+      background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(11,27,44,0.04);
+      box-shadow:0 6px 18px rgba(11,27,44,0.06);min-width:220px;cursor:pointer;
+      font-size:15px;color:var(--navy-2);font-family:inherit;transition:box-shadow .15s,transform .15s;
+    }
+    .doc:hover{box-shadow:0 6px 16px rgba(11,27,44,0.1);transform:translateY(-2px)}
+    .doc .badge{background:var(--navy);color:white;padding:5px 8px;border-radius:6px;font-weight:700;font-size:11px;white-space:nowrap}
+    .doc.uploaded .badge{background:var(--teal)}
+    .doc-meta{display:flex;flex-direction:column;line-height:1.3}
+    .doc-meta small{color:var(--muted);font-size:11px}
+    /* Overlays */
+    .overlay{position:fixed;inset:0;background:rgba(2,6,23,0.52);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+    .overlay.show{display:flex}
+    .modal{width:100%;max-width:780px;background:linear-gradient(180deg,#fff,#fbfbfd);border-radius:14px;padding:20px;box-shadow:0 14px 40px rgba(2,6,23,0.5);border:1px solid rgba(11,27,44,0.06);max-height:92vh;overflow-y:auto}
+    /* Preserve the login appearance; make only the authenticated dashboard opaque. */
+    .modal.admin{
+      max-width:760px;
+      min-height:0;
+      padding:0;
+      border-radius:0;
+      background:transparent;
+      border:none;
+      box-shadow:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-start;
+      align-items:center;
+    }
+    #admin-overlay.dashboard-mode{background:#f3f6fa}
+    #admin-overlay.dashboard-mode .modal.admin{
+      width:100%;
+      max-width:1040px;
+      padding:24px;
+      border-radius:18px;
+      background:#f8fafc;
+      border:1px solid rgba(11,27,44,0.1);
+      box-shadow:0 18px 55px rgba(2,6,23,0.2);
+      align-items:stretch;
+      max-height:92vh;
+      overflow-y:auto;
+    }
+    .modal.admin .modal-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:0;
+      padding:0;
+      border-radius:0;
+      background:transparent;
+      box-shadow:none;
+      position:relative;
+      width:100%;
+    }
+
+    /* Modern centered login card inside the admin modal (kiosk-friendly larger) */
+    .login-card{
+      width:100%;
+      max-width:720px;              /* larger for kiosk */
+      min-width:520px;
+      margin:12px auto 8px;
+      background:#ffffff;           /* plain white background for the form */
+      border-radius:18px;
+      padding:32px;                 /* more breathing room for touch */
+      box-shadow:0 22px 48px rgba(6,24,40,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
+      border: none;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+      align-items:center;
+      min-height:520px;             /* taller card for larger inputs */
+    }
+
+    .login-card .login-logo{width:120px; height: auto; margin-top:-18px; background:linear-gradient(135deg,#eaf8ff,#ffffff); padding:8px; border-radius:12px; box-shadow:0 10px 30px rgba(46,117,194,0.08);}
+    .login-card .login-logo img{width:100%;height:auto;display:block;border-radius:8px;}
+    /* small admin label inside the login card to clearly identify the block */
+    .login-card .admin-label{font-size:13px;color:var(--navy-2);font-weight:700;padding:6px 12px;border-radius:8px;background:rgba(47,103,180,0.06);margin-top:6px}
+
+    .login-card h3{margin:0;font-family:"Playfair Display",serif;color:var(--navy-2);font-size:18px;text-align:center}
+
+    /* secure badge using logo colours but cooler blue accent */
+    .modal.admin .secure-badge{
+      display:inline-flex;align-items:center;gap:10px;
+      background:linear-gradient(90deg,rgba(58,130,200,0.08),rgba(58,160,168,0.06));
+      padding:8px 12px;border-radius:10px;border:1px solid rgba(58,130,200,0.12);
+      color:var(--navy-2);font-weight:700;font-size:13px;
+      box-shadow:0 8px 20px rgba(58,130,200,0.04);
+    }
+
+    /* Formulaires de connexion : more vertical breathing room and centered inside the card (kiosk) */
+    .login-form{display:flex;flex-direction:column;gap:18px;width:100%;padding:8px 12px;box-sizing:border-box;align-items:stretch;justify-content:flex-start}
+
+    /* Inputs adapted to the card style with blue accents */
+    .login-form input{
+      padding:14px 12px;border-radius:10px;border:1.5px solid rgba(7,32,52,0.08);font-size:15px;font-family:inherit;outline:none;transition:box-shadow .18s,border-color .15s;min-height:48px;background:linear-gradient(180deg,#ffffff,#fbfdff);
+      box-shadow:0 6px 18px rgba(47,103,180,0.03) inset;
+    }
+    .login-form input:focus{
+      border-color:#2f6fbf;
+      box-shadow:0 10px 30px rgba(47,103,180,0.12);
+    }
+
+    /* Larger, friendlier primary button tuned to logo palette */
+    .login-form .btn.primary{
+      padding:14px 20px;
+      min-width:100%;
+      font-size:16px;
+      border-radius:12px;
+      background:linear-gradient(180deg,#2f6fbf,#2a63b0);
+      box-shadow:0 12px 32px rgba(47,103,180,0.18);
+      border:none;color:white;
+      font-weight:700;
+    }
+
+    .login-actions{display:flex;flex-direction:column;gap:10px;align-items:center}
+
+    .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+    .modal h3{margin:0;font-family:"Playfair Display",serif;color:var(--navy-2);font-size:20px}
+
+    /* Formulaires de connexion : more spacious and vertically larger for kiosk */
+    .login-form{display:flex;flex-direction:column;gap:20px;max-width:600px;min-height:460px;margin:0 auto;justify-content:space-between;padding:12px 0}
+
+    /* Larger primary login button inside the compact login form (more prominent) */
+    .login-form .btn.primary{
+      padding:18px 28px;
+      min-width:240px;
+      font-size:18px;
+      border-radius:14px;
+      background:linear-gradient(180deg,var(--teal),#2f8b8f);
+      box-shadow:0 10px 28px rgba(58,160,168,0.18);
+      border:none;color:white;
+    }
+
+    /* Slightly larger accent buttons in admin */
+    .modal.admin .btn.ghost.sm{padding:10px 12px;font-size:14px;border-radius:10px}
+
+    /* small logo inside the login form */
+    .login-logo{display:flex;justify-content:center;margin-bottom:10px}
+    .login-logo img{width:140px;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 8px 30px rgba(9,20,34,0.06)}
+
+    /* inputs get teal focus with a soft gold highlight */
+    .login-form input{
+      padding:16px 14px;border-radius:12px;border:1.5px solid rgba(7,32,52,0.08);font-size:16px;font-family:inherit;outline:none;transition:box-shadow .18s,border-color .15s;min-height:52px;background:white;
+    }
+    .login-form input:focus{
+      border-color:var(--teal);
+      box-shadow:0 6px 18px rgba(58,160,168,0.09),0 1px 0 rgba(207,167,91,0.03) inset;
+    }
+
+    #login-msg{font-size:14px;margin:0;min-height:20px}
+    #admin-dashboard{display:none}
+    .admin-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-bottom:14px;border-bottom:1px dashed rgba(7,32,52,0.08);margin-bottom:16px}
+    .admin-title{font-family:"Playfair Display",serif;font-size:18px;color:var(--navy-2);margin:0}
+    .stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+    .stat-card{flex:1 1 120px;color:white;border-radius:10px;padding:12px 14px;background:linear-gradient(135deg,var(--navy),var(--navy-2))}
+    .stat-card .stat-num{font-size:24px;font-weight:700;font-family:"Playfair Display",serif;display:block}
+    .stat-card .stat-label{font-size:11px;opacity:.7;margin-top:2px;display:block}
+    .stat-card.gold{background:linear-gradient(135deg,#b07d20,var(--gold))}
+    .stat-card.teal-card{background:linear-gradient(135deg,#2a8089,var(--teal))}
+    .upload-section{background:rgba(11,27,44,0.02);border:1px solid rgba(11,27,44,0.06);border-radius:12px;padding:16px;margin-bottom:18px}
+    .upload-section h4{margin:0 0 14px;font-family:"Playfair Display",serif;color:var(--navy-2);font-size:16px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media(max-width:540px){.form-grid{grid-template-columns:1fr}}
+    label.field-label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+    select.field,input.field{width:100%;padding:10px 12px;border-radius:8px;border:1.5px solid rgba(7,32,52,0.1);font-size:14px;font-family:inherit;color:var(--navy-2);background:white;box-sizing:border-box;outline:none;transition:border-color .15s}
+    select.field:focus,input.field:focus{border-color:var(--teal)}
+    .file-input-wrap{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;border:1.5px dashed rgba(7,32,52,0.15);background:white;cursor:pointer;transition:border-color .15s}
+    .file-input-wrap:hover{border-color:var(--teal)}
+    .file-input-wrap input[type="file"]{display:none}
+    .file-name{font-size:13px;color:var(--muted);flex:1}
+    .file-name.selected{color:var(--navy-2);font-weight:600}
+    .auto-name{grid-column:1/-1;padding:8px 12px;border-radius:8px;background:rgba(58,160,168,0.07);border:1px solid rgba(58,160,168,0.2);font-size:13px;font-weight:600}
+    .upload-actions{grid-column:1/-1;display:flex;gap:8px;align-items:center;margin-top:4px}
+    #upload-msg{font-size:13px;margin:0}
+    .table-section h4{font-family:"Playfair Display",serif;color:var(--navy-2);font-size:16px;margin:0 0 12px}
+    .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid rgba(11,27,44,0.06)}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead{background:linear-gradient(180deg,var(--navy),var(--navy-2))}
+    thead th{color:white;padding:10px 12px;text-align:left;font-weight:600;white-space:nowrap}
+    thead th:first-child{border-radius:10px 0 0 0}
+    thead th:last-child{border-radius:0 10px 0 0}
+    tbody tr{border-bottom:1px solid rgba(11,27,44,0.04);transition:background .12s}
+    tbody tr:hover{background:rgba(58,160,168,0.04)}
+    tbody tr:last-child{border-bottom:none}
+    td{padding:9px 12px;color:var(--navy-2);vertical-align:middle}
+    td .badge-small{background:var(--teal);color:white;padding:3px 7px;border-radius:5px;font-size:11px;font-weight:700}
+    .empty-table{text-align:center;color:var(--muted);padding:28px;font-size:14px}
+    td.actions{white-space:nowrap;display:flex;gap:6px}
+    .viewer-iframe{width:100%;height:60vh;border-radius:8px;border:1px solid rgba(7,32,52,0.06);background:white;margin-top:10px}
+    .divider{height:1px;background:linear-gradient(90deg,rgba(7,32,52,0.03),rgba(7,32,52,0.01));margin:8px 0 12px;border-radius:2px}
+    footer{font-size:12px;color:var(--muted);text-align:center;padding:4px 0 4px}
+    @media(max-width:640px){
+      a.back{left:8px;top:12px;padding:7px 9px;font-size:12px}
+      .logo{top:12px}.title-block{margin-top:44px}
+      .card{flex:1 1 100%}.modal{padding:14px}.viewer-iframe{height:48vh}
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="back-to-home-container">
-                <a href="https://umi4555.github.io/accueil/" class="btn btn-back-home">
-                    ← Retour à l'accueil
-                </a>
-            </div>
-            <div class="logo-container">
-                <img src="logo (1).png" alt="Logo Lycée Château Blanc" class="lycee-logo">
-            </div>
-            <nav class="main-navigation">
-                <ul>
-                  
-                    <li><a href="#" id="admin-login-nav">Espace Administration</a></li>
-                </ul>
-            </nav>
-
-            <h1>Espace Stages – Lycée Château Blanc</h1>
-            <p class="site-intro">
-                Bienvenue sur la plateforme de gestion des documents de stages. 
-                Ici, vous trouverez tous les documents essentiels 
-            </p>
-        </header>
-
-        <section id="actualites" class="news-section">
-            <h2>Dernières Actualités</h2>
-            <div class="news-items">
-                <div class="news-item">
-                    <h3>Nouveaux documents de stage 2025</h3>
-                    <p>Mise à jour des formulaires pour la campagne de stages 2025.</p>
-                </div>
-                <div class="news-item">
-                <h3>Remise des coupons-réponse avant le stage</h3>
-<p>Les coupons-réponse doivent être remis avant le départ en stage. Sans eux, le stage ne sera pas validé.</p>
-
-                </div>
-            </div>
-        </section>
-            <div class="search-container">
- 
-            </div>
-
-        <section class="filieres-accordion">
-            <!-- Grouped by Professional Families -->
-            <div class="professional-family">
-                <h2>Services et Accompagnement Social</h2>
-                <div class="filiere-group">
-                    <div class="filiere-items">
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="2GT">
-                            <h3>2GT – Seconde Générale et Technologique</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="1ST2S">
-                            <h3>1ST2S – Première ST2S</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="TST2S">
-                            <h3>TST2S – Terminale ST2S</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="ASSP">
-                            <h3>ASSP – Accompagnement, Soins et Services à la Personne</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="AAGA">
-                            <h3>AAGA – Agent Accompagnant au Grand Âge</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="MC-AD">
-                            <h3>MC AD – Mention Complémentaire Aide à Domicile</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="professional-family">
-                <h2>Technologies Numériques et Électroniques</h2>
-                <div class="filiere-group">
-                    <div class="filiere-items">
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="Famille-TNE">
-                            <h3>Famille de métiers Transitions Numérique et Energétique (TNE)</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="CIEL">
-                            <h3>CIEL – Cybersécurité, Informatique et Réseaux</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="MELEC">
-                            <h3>MELEC – Métiers de l'Électricité et Environnements Connectés</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="MEE">
-                            <h3>MEE – Maintenance et Efficacité Énergétique</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="MFER">
-                            <h3>MFER – Métiers du Froid et Énergies Renouvelables</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="professional-family">
-                <h2>Industrie et Fabrication</h2>
-                <div class="filiere-group">
-                    <div class="filiere-items">
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="TRPM-RSP">
-                            <h3>TRPM-RSP – Technicien en Réalisation de Produits Mécaniques</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="TMA">
-                            <h3>TMA – Technicien Menuisier Agenceur</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="ERA">
-                            <h3>ERA – Étude et Réalisation d'Agencement</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="CAP-Ebeniste">
-                            <h3>CAP Ébéniste</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="BMA-Ebeniste">
-                            <h3>BMA Ébéniste</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="CAP-MIS">
-                            <h3>CAP MIS – Monteur en Installations Sanitaires</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="professional-family">
-                <h2>Formations Supérieures et Dispositifs Spéciaux</h2>
-                <div class="filiere-group">
-                    <div class="filiere-items">
-                        <div class="category-item" data-year="2024" data-type="bts" data-filiere="BTS-ESF">
-                            <h3>BTS - Économie Sociale Familiale (ESF)</h3>
-                        </div>
-                        <div class="category-item" data-year="2024" data-type="dispositif" data-filiere="DPR">
-                            <h3>Dispositifs de Prévention et de Remobilisation (DPR)</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="professional-family">
-                <h2>Orientation et Préparation</h2>
-                <div class="filiere-group">
-                    <div class="filiere-items">
-                        <div class="category-item" data-year="2024" data-type="convention" data-filiere="3PM">
-                            <h3>3PM – 3e Prépa-Métiers</h3>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="login-modal" id="admin-login">
-            <div class="login-content">
-                <div class="logo-container">
-                    <img src="logo (1).png" alt="Logo Lycée Château Blanc" class="lycee-logo">
-                </div>
-                <h2>Espace Administration</h2>
-                <form class="login-form">
-                    <input type="password" placeholder="Mot de passe" required>
-                    <button type="submit" class="btn">Connexion</button>
-                    <button type="button" class="btn btn-close">Fermer</button>
-                </form>
-            </div>
-        </section>
+<div class="app">
+  <header>
+    <div style="flex:1 1 auto">
+      <a class="back" href="https://umi4555.github.io/accueil/">← Retour</a>
     </div>
+    <div class="logo" aria-hidden="true">
+      <img src="/logo (1).png" alt="Lycée Château Blanc" style="width:110px;height:auto;object-fit:contain;display:block">
+    </div>
+    <div style="flex:1 1 auto"></div>
+    <div style="flex-basis:100%"></div>
+    <div class="title-block" style="flex-basis:100%">
+      <h1>Espace Stages – Lycée Château Blanc</h1>
+      <p class="lead">Bienvenue sur la plateforme de consultation des coupons-réponse de stages.</p>
+    </div>
+  </header>
+  <div class="divider"></div>
 
-    <div id="document-viewer-modal" class="document-viewer-modal">
-        <div class="document-viewer-content">
-            <span class="document-viewer-close">×</span>
-            <iframe id="document-preview" src="" frameborder="0"></iframe>
+  <div class="content" style="flex:1 1 auto;overflow:auto;padding:8px 4px 2px;">
+    <main>
+      <section class="cards">
+        <article class="card" data-animate>
+          <h3>Coupons-réponse 2026</h3>
+          <p>Les coupons-réponse pour la campagne de stages 2025-2026 sont disponibles par filière ci-dessous.</p>
+        </article>
+        <article class="card" data-animate>
+          <h3>Remise obligatoire avant le stage</h3>
+          <p>Les coupons-réponse doivent être remis avant le départ en stage. Sans eux, le stage ne sera pas validé.</p>
+        </article>
+      </section>
+
+      <section class="accordion" id="main-accordion">
+        <div class="section" data-family="s1">
+          <div class="head" tabindex="0"><h4>Bois et Métiers d'art (AMA)</h4><div class="chev">+</div></div>
+          <div class="body" id="body-s1"></div>
         </div>
-    </div>
+        <div class="section" data-family="s2">
+          <div class="head" tabindex="0"><h4>Bâtiment-Industrie · TNE</h4><div class="chev">+</div></div>
+          <div class="body" id="body-s2"></div>
+        </div>
+        <div class="section" data-family="s3">
+          <div class="head" tabindex="0"><h4>Bâtiment-Industrie · REMI</h4><div class="chev">+</div></div>
+          <div class="body" id="body-s3"></div>
+        </div>
+        <div class="section" data-family="s4">
+          <div class="head" tabindex="0"><h4>Sanitaire, social &amp; Services à la personne</h4><div class="chev">+</div></div>
+          <div class="body" id="body-s4"></div>
+        </div>
+        <div class="section" data-family="s5">
+          <div class="head" tabindex="0"><h4>3ème Prépa Métiers &amp; Dispositifs Spécifiques</h4><div class="chev">+</div></div>
+          <div class="body" id="body-s5"></div>
+        </div>
+      </section>
+    </main>
+    <footer>© Lycée Château Blanc — Plateforme de gestion des stages</footer>
+  </div>
+</div>
 
+<!-- VIEWER OVERLAY -->
+<div class="overlay" id="viewer-overlay">
+  <div class="modal" style="max-width:900px" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3 id="viewer-title">Aperçu du document</h3>
+      <button class="btn ghost sm" id="close-viewer">✕ Fermer</button>
+    </div>
+    <iframe id="viewer-iframe" class="viewer-iframe" src="" title="Aperçu"></iframe>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ── CONFIG ── */
+  const NIVEAUX = {
+    '2GT':['Seconde'],'3PM':['Seconde'],
+    'TNE-1-2':['Seconde (Groupes 1 & 2)'],
+    'TNE-3-4':['Seconde (Groupes 3 & 4)'],
+    'TNE-5-6':['Seconde (Groupes 5 & 6)'],
+    'CIEL':['Première','Terminale'],
+    'MELEC':['Première','Terminale'],
+    'MEE':['Première','Terminale'],
+    'MFER':['Première','Terminale'],
+    '1ST2S':['Première ST2S'],
+    'TST2S':['Terminale ST2S'],
+    'A2SP':['Première','Terminale'],
+    '2AGA':['1ère année','2ème année'],
+    'MC-AD':['1ère année','2ème année'],
+    'TRPM-RSP':['Première','Terminale'],
+    'TMA':['Première','Terminale'],
+    'ERA':['Première','Terminale'],
+    'CAP-Ebeniste':['1ère année','2ème année'],
+    'BMA-Ebeniste':['1ère année','2ème année','3ème année'],
+    'CAP-MIS':['1ère année','2ème année'],
+    'BTS-ESF':['BTS 1ère année','BTS 2ème année'],
+    'DPR':['Niveau 1','Niveau 2'],
+  };
+
+  const LABELS = {
+    '2GT':'2GT','1ST2S':'1ST2S','TST2S':'TST2S','A2SP':'A2SP','2AGA':'2AGA','MC-AD':'MC AD',
+    'TNE-1-2':'TNE 1&2','TNE-3-4':'TNE 3&4','TNE-5-6':'TNE 5&6',
+    'CIEL':'CIEL','MELEC':'MELEC','MEE':'MEE','MFER':'MFER',
+    'TRPM-RSP':'TRPM','TMA':'TMA','ERA':'ERA',
+    'CAP-Ebeniste':'CAP Éb.','BMA-Ebeniste':'BMA Éb.','CAP-MIS':'CAP MIS',
+    'BTS-ESF':'BTS ESF','DPR':'DPR','3PM':'3PM'
+  };
+
+  const FAMILY_MAP = {
+    'TMA':'s1','ERA':'s1','CAP-Ebeniste':'s1','BMA-Ebeniste':'s1',
+    'TNE-1-2':'s2','TNE-3-4':'s2','TNE-5-6':'s2',
+    'CIEL':'s2','MELEC':'s2','MEE':'s2','MFER':'s2','CAP-MIS':'s2',
+    'TRPM-RSP':'s3',
+    '2GT':'s4','1ST2S':'s4','TST2S':'s4','A2SP':'s4','2AGA':'s4','MC-AD':'s4','BTS-ESF':'s4',
+    'DPR':'s5','3PM':'s5'
+  };
+
+  const FAMILY_ORDER = {
+    s1:['TMA','ERA','CAP-Ebeniste','BMA-Ebeniste'],
+    s2:[/* handled via subgroups */],
+    s3:['TRPM-RSP'],
+    s4:['2GT','1ST2S','TST2S','A2SP','2AGA','MC-AD','BTS-ESF'],s5:['3PM','DPR']
+  };
+
+  const S2_SUBGROUPS = [
+    {title:'Seconde TNE — Classes mixtes',filieres:['TNE-1-2','TNE-3-4','TNE-5-6']},
+    {title:'Branches (1ère & Terminale)',filieres:['CIEL','MELEC','MEE','MFER','CAP-MIS']}
+  ];
+
+  /* ── DOCUMENTS (dossier "coupons/") ──
+     Déposer les PDF dans le dossier coupons/ avec le nom :
+     <FILIERE>_<Niveau-avec-tirets>_Coupon-reponse.pdf
+     ex : coupons/TMA_Premiere_Coupon-reponse.pdf */
+  const slug=n=>n.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,'et').replace(/[()]/g,'').replace(/\s+/g,'-');
+  const docs=[];
+  Object.keys(NIVEAUX).forEach(f=>NIVEAUX[f].forEach(n=>{
+    const fn=f+'_'+slug(n)+'_Coupon-reponse.pdf';
+    docs.push({id:f+'|'+n,filiere:f,niveau:n,filename:fn,url:'coupons/'+encodeURIComponent(fn),available:false});
+  }));
+
+/* ── ACCORDION ── */
+  document.querySelectorAll('.section').forEach(sec=>{
+    const head=sec.querySelector('.head');
+    const toggle=()=>sec.classList.toggle('open');
+    head.addEventListener('click',toggle);
+    head.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();} });
+  });
+
+  /* ── PUBLIC RENDER ── */
+  function renderPublic(){
+    ['s1','s2','s3','s4','s5'].forEach(fid=>{
+      const body=document.getElementById('body-'+fid);
+      body.innerHTML='';
+      if(fid==='s2'){
+        S2_SUBGROUPS.forEach(sg=>{
+          const wrap=document.createElement('div'); wrap.className='subgroup';
+          const title=document.createElement('div'); title.className='subgroup-title'; title.textContent=sg.title;
+          wrap.appendChild(title);
+          const docsWrap=document.createElement('div'); docsWrap.className='subgroup-docs';
+          sg.filieres.forEach(f=>renderFiliere(f,docsWrap));
+          wrap.appendChild(docsWrap); body.appendChild(wrap);
+        });
+      } else {
+        FAMILY_ORDER[fid].forEach(f=>renderFiliere(f,body));
+      }
+    });
+  }
+
+  function renderFiliere(filiere,container){
+    const avail=docs.filter(d=>d.filiere===filiere&&d.available);
+    if(!avail.length){
+      const btn=document.createElement('button');
+      btn.className='doc'; btn.disabled=true; btn.style.cssText='opacity:.5;cursor:default';
+      btn.innerHTML=`<span class="badge">${LABELS[filiere]||filiere}</span><div class="doc-meta"><span>Aucun coupon disponible</span><small>En attente</small></div>`;
+      container.appendChild(btn);
+    } else {
+      avail.forEach(d=>{
+        const btn=document.createElement('button'); btn.className='doc uploaded';
+        btn.innerHTML=`<span class="badge">${LABELS[d.filiere]||d.filiere}</span><div class="doc-meta"><span>${LABELS[d.filiere]} – ${d.niveau}</span><small>📎 Coupon-réponse</small></div>`;
+        btn.addEventListener('click',()=>openViewer(d));
+        container.appendChild(btn);
+      });
+    }
+  }
+
+  async function checkDocs(){
+    await Promise.all(docs.map(async d=>{
+      try{
+        const r=await fetch(d.url,{method:'HEAD',cache:'no-cache'});
+        d.available=r.ok&&(r.headers.get('content-type')||'').includes('pdf');
+      }catch(e){ d.available=false; }
+    }));
+    renderPublic();
+  }
+
+  /* ── VIEWER ── */
+  const viewerOverlay=document.getElementById('viewer-overlay');
+  const viewerIframe=document.getElementById('viewer-iframe');
+
+  function openViewer(doc){
+    document.getElementById('viewer-title').textContent=doc.filename;
+    viewerIframe.src=doc.url;
+    viewerOverlay.classList.add('show'); document.body.style.overflow='hidden';
+  }
+  document.getElementById('close-viewer').addEventListener('click',()=>{ viewerOverlay.classList.remove('show'); viewerIframe.src=''; document.body.style.overflow=''; });
+  viewerOverlay.addEventListener('click',e=>{ if(e.target===viewerOverlay) document.getElementById('close-viewer').click(); });
+
+  /* ── ANIMATIONS ── */
+  const obs=new IntersectionObserver(entries=>entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('show');obs.unobserve(e.target);} }),{threshold:.12});
+  document.querySelectorAll('[data-animate]').forEach(el=>obs.observe(el));
+  setTimeout(()=>document.querySelectorAll('.card').forEach((c,i)=>setTimeout(()=>c.classList.add('show'),i*120+80)),80);
+
+  window.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){
+      if(viewerOverlay.classList.contains('show')) document.getElementById('close-viewer').click();
+      
+    }
+  });
+
+  /* ── INIT ── */
+  renderPublic(); checkDocs();
+})();
+</script>
 </body>
 </html>
