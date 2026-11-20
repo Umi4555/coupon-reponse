@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Dépôt des coupons-réponse</title>
+<style>
+  body{font-family:system-ui,sans-serif;background:#f3f6fa;margin:0;padding:24px;color:#0b1b30}
+  .box{max-width:760px;margin:0 auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 6px 18px rgba(9,20,34,.12)}
+  h1{font-size:22px;margin:0 0 4px} p.s{color:#6b7280;margin:0 0 18px;font-size:14px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  select{flex:1 1 240px;padding:12px;border-radius:10px;border:1.5px solid #cbd5e1;font-size:15px}
+  #drop{border:3px dashed #3aa0a8;border-radius:16px;padding:44px 20px;text-align:center;font-size:18px;color:#2a8089;background:#f0fafb;cursor:pointer}
+  #drop.over{background:#d9f2f4}
+  #msg{min-height:22px;margin:12px 0;font-weight:600}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+  td,th{padding:8px;border-bottom:1px solid #e5e7eb;text-align:left}
+  button.del{background:#fef2f2;color:#b91c1c;border:1px solid #fca5a5;border-radius:8px;padding:6px 10px;cursor:pointer}
+  a{color:#2a8089}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>📤 Dépôt des coupons-réponse</h1>
+  <p class="s">1. Choisissez la filière et le niveau · 2. Glissez le PDF dans le cadre · <a href="index.html">Voir le site</a></p>
+  <div class="row">
+    <select id="f"><option value="">— Filière —</option></select>
+    <select id="n"><option value="">— Niveau —</option></select>
+  </div>
+  <div id="drop">Glissez le PDF ici<br><small>ou cliquez pour le choisir</small></div>
+  <input type="file" id="file" accept="application/pdf" hidden>
+  <div id="msg"></div>
+  <h3>Coupons en ligne</h3>
+  <table><thead><tr><th>Fichier</th><th></th></tr></thead><tbody id="list"></tbody></table>
+</div>
+<script src="config.js"></script>
+<script>
+const NIV={'TMA':['Première','Terminale'],'ERA':['Première','Terminale'],'CAP-Ebeniste':['1ère année','2ème année'],'BMA-Ebeniste':['1ère année','2ème année','3ème année'],
+'TNE-1-2':['Seconde (Groupes 1 & 2)'],'TNE-3-4':['Seconde (Groupes 3 & 4)'],'TNE-5-6':['Seconde (Groupes 5 & 6)'],'CIEL':['Première','Terminale'],'MELEC':['Première','Terminale'],'MEE':['Première','Terminale'],'MFER':['Première','Terminale'],'CAP-MIS':['1ère année','2ème année'],
+'TRPM-RSP':['Première','Terminale'],
+'2GT':['Seconde'],'1ST2S':['Première ST2S'],'TST2S':['Terminale ST2S'],'A2SP':['Première','Terminale'],'2AGA':['1ère année','2ème année'],'MC-AD':['1ère année','2ème année'],'BTS-ESF':['BTS 1ère année','BTS 2ème année'],
+'3PM':['Seconde'],'DPR':['Niveau 1','Niveau 2']};
+const slug=n=>n.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/&/g,'et').replace(/[()]/g,'').replace(/\s+/g,'-');
+const H={apikey:CFG.KEY,Authorization:'Bearer '+CFG.KEY};
+const f=document.getElementById('f'),n=document.getElementById('n'),msg=document.getElementById('msg'),drop=document.getElementById('drop'),inp=document.getElementById('file');
+Object.keys(NIV).forEach(k=>f.add(new Option(k,k)));
+f.onchange=()=>{n.length=1;(NIV[f.value]||[]).forEach(x=>n.add(new Option(x,x)));if(n.length===2)n.selectedIndex=1;};
+const say=(t,c)=>{msg.textContent=t;msg.style.color=c||'#0b1b30'};
+
+async function upload(file){
+  if(!f.value||!n.value) return say('Choisissez d\'abord la filière et le niveau.','#b91c1c');
+  if(file.type!=='application/pdf') return say('Le fichier doit être un PDF.','#b91c1c');
+  const name=f.value+'_'+slug(n.value)+'_Coupon-reponse.pdf';
+  say('Envoi en cours…');
+  try{
+    const r=await fetch(CFG.URL+'/storage/v1/object/'+CFG.BUCKET+'/'+encodeURIComponent(name),{method:'POST',headers:{...H,'x-upsert':'true','Content-Type':'application/pdf'},body:file});
+    if(!r.ok) throw new Error(await r.text());
+    say('✓ '+name+' est en ligne sur le site.','#15803d'); refresh();
+  }catch(e){ say('Échec de l\'envoi : '+e.message,'#b91c1c'); }
+}
+drop.onclick=()=>inp.click();
+inp.onchange=()=>{ if(inp.files[0]) upload(inp.files[0]); inp.value=''; };
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};
+drop.ondragleave=()=>drop.classList.remove('over');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');if(e.dataTransfer.files[0]) upload(e.dataTransfer.files[0]);};
+
+async function refresh(){
+  const tb=document.getElementById('list'); tb.innerHTML='';
+  const r=await fetch(CFG.URL+'/storage/v1/object/list/'+CFG.BUCKET,{method:'POST',headers:{...H,'Content-Type':'application/json'},body:JSON.stringify({prefix:'',limit:1000,sortBy:{column:'name',order:'asc'}})});
+  const list=await r.json();
+  if(!Array.isArray(list)||!list.length){tb.innerHTML='<tr><td colspan="2">Aucun coupon pour le moment.</td></tr>';return;}
+  list.forEach(o=>{
+    const tr=document.createElement('tr');
+    const url=CFG.URL+'/storage/v1/object/public/'+CFG.BUCKET+'/'+encodeURIComponent(o.name);
+    tr.innerHTML='<td><a target="_blank" href="'+url+'">'+o.name+'</a></td><td></td>';
+    const b=document.createElement('button');b.className='del';b.textContent='🗑 Supprimer';
+    b.onclick=async()=>{ if(!confirm('Supprimer '+o.name+' ?')) return;
+      await fetch(CFG.URL+'/storage/v1/object/'+CFG.BUCKET+'/'+encodeURIComponent(o.name),{method:'DELETE',headers:H}); refresh(); };
+    tr.lastChild.appendChild(b); tb.appendChild(tr);
+  });
+}
+refresh();
+</script>
+</body>
+</html>
